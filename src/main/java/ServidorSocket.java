@@ -9,7 +9,7 @@ public class ServidorSocket implements Runnable {
     public ServidorSocket(Integer port, String identificador) throws IOException {
         serverSocket = new ServerSocket(port);
         this.identificador = identificador;
-        System.out.println("Servidor  iniciado na porta " + port + ". Aguardando conexões...");
+        System.out.println("Servidor iniciado na porta " + port + ". Aguardando conexões...");
     }
 
     @Override

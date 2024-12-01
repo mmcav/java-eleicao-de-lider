@@ -34,8 +34,10 @@ public abstract class Tipo {
             String identificador = prop.getProperty("app.processo." + i + ".identificador");
             String host = prop.getProperty("app.processo." + i + ".host");
             String port = prop.getProperty("app.processo." + i + ".port");
-            Processo processo = new Processo(identificador, host, port);
-            processos.add(processo);
+            if (!(identificador.equals(this.nome) && port.equals(this.porta))) {
+                Processo processo = new Processo(identificador, host, port);
+                processos.add(processo);
+            }
         }
         iniciarConexao();
     }
