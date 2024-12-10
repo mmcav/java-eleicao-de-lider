@@ -1,20 +1,23 @@
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class Tipo {
-    protected String porta;
-    protected String nome;
-    protected List<Processo> processos;
+    protected Integer porta;
+    protected Integer nome;
+
+    protected Processo me;
+
     protected ServidorSocket serverSocket;
 
     public Tipo(String porta, String nome) {
-        this.porta = porta;
-        this.nome = nome;
-        System.out.println("Estou escutando na porta " + this.porta);
+        this.porta = Integer.valueOf(porta);
+        this.nome = Integer.valueOf(nome);
 
         Properties prop = new Properties();
         try (FileInputStream fis = new FileInputStream("app.config")) {
@@ -29,22 +32,31 @@ public abstract class Tipo {
         System.out.println(prop.getProperty("app.name"));
 
         Integer totalProcesso = Integer.parseInt(prop.getProperty("app.processo.total"));
-        processos = new ArrayList<>();
+        Map<Integer, Processo> processos = new HashMap<>();
         for (int i = 1; i <= totalProcesso; i++) {
-            String identificador = prop.getProperty("app.processo." + i + ".identificador");
+            Integer identificador = Integer.valueOf(prop.getProperty("app.processo." + i + ".identificador"));
             String host = prop.getProperty("app.processo." + i + ".host");
-            String port = prop.getProperty("app.processo." + i + ".port");
-            if (!(identificador.equals(this.nome) && port.equals(this.porta))) {
-                Processo processo = new Processo(identificador, host, port);
-                processos.add(processo);
+            Integer port = Integer.valueOf(prop.getProperty("app.processo." + i + ".port"));
+            Processo processo = new Processo(identificador, host, port);
+            if (identificador.equals(this.nome)) {
+                me = processo;
             }
+            processos.put(identificador, processo);
         }
-        iniciarConexao();
+
+        Processo processoLider = processos.get(processos.size());
+        processoLider.setIsLider(Boolean.TRUE);
+
+        this.iniciarConexao();
+        Processos gerenciador = Processos.getInstance();
+        gerenciador.config(processos, me, processoLider, totalProcesso);
     }
+
+    public abstract void run();
 
     protected void iniciarConexao() {
         try {
-            serverSocket = new ServidorSocket(Integer.valueOf(this.porta), this.nome);
+            serverSocket = new ServidorSocket(me, this.porta);
             Thread thread = new Thread(serverSocket);
             thread.start();
         } catch (IOException e) {
@@ -52,6 +64,17 @@ public abstract class Tipo {
         }
     }
 
-    public abstract void run();
+    protected void checkLider() {
+        Processo processoLider = Processos.getInstance().getLider();
+        try {
+            ClienteSocket socket = new ClienteSocket(processoLider.getHost(), processoLider.getPort());
+            socket.enviar("02|Você é o líder!");
+            String resposta = socket.receber();
+            System.out.println("Resposta: " + resposta);
+        } catch (IOException ex) {
+            Eleicao.getInstance().callEleicao();
+            Logger.getLogger(MultiPrograma.class.getName()).log(Level.SEVERE, "Erro na conexao com " + processoLider.getIdentificador() + ": " + ex.getMessage());
+        }
+    }
     
 }

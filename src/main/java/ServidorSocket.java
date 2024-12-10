@@ -4,11 +4,11 @@ import java.net.Socket;
 
 public class ServidorSocket implements Runnable {
     private ServerSocket serverSocket;
-    private String identificador;
+    private Processo me;
 
-    public ServidorSocket(Integer port, String identificador) throws IOException {
+    public ServidorSocket(Processo me, Integer port) throws IOException {
         serverSocket = new ServerSocket(port);
-        this.identificador = identificador;
+        this.me = me;
         System.out.println("Servidor iniciado na porta " + port + ". Aguardando conexões...");
     }
 
@@ -17,7 +17,7 @@ public class ServidorSocket implements Runnable {
         try {
             while (true) {
                 Socket socket = serverSocket.accept();
-                Thread thread = new Thread(new ClienteHandler(socket, this.identificador));
+                Thread thread = new Thread(new ClienteHandler(socket, this.me));
                 thread.start();
             }
         } catch (IOException e) {

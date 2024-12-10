@@ -10,19 +10,22 @@ public class Produtor extends Tipo {
     public void run() {
         while (true) {
             try {
-                for (Processo processo : processos) {
-                    try {
-                        ClienteSocket socket = new ClienteSocket(processo.getHost(), Integer.valueOf(processo.getPort()));
-                        socket.enviar("Olá, eu sou o processo produtor " + this.nome);
-                        String resposta = socket.receber();
-                        System.out.println("Resposta: " + resposta);
-                    } catch (IOException ex) {
-                        Logger.getLogger(MultiPrograma.class.getName()).log(Level.SEVERE, "Erro na conexão com " + processo.getIdentificador() + ": " + ex.getMessage());
+                Thread.sleep(1000 * 2);
+                if (!Eleicao.getInstance().isEleicaoIniciada()) {
+                    Processo processo = Processos.getInstance().getRandomProcesso();
+                    if (!processo.isLider()) {
+                        try {
+                            ClienteSocket socket = new ClienteSocket(processo.getHost(), processo.getPort());
+                            socket.enviar("01|Olá, eu sou o processo produtor " + this.nome);
+                            String resposta = socket.receber();
+                            System.out.println("Resposta: " + resposta);
+                        } catch (IOException ex) {
+                            Logger.getLogger(MultiPrograma.class.getName()).log(Level.SEVERE, "Erro na conexao com " + processo.getIdentificador() + ": " + ex.getMessage());
+                        }
+                    } else {
+                        this.checkLider();
                     }
                 }
-                System.out.println("Vou dormir!");
-                Thread.sleep(1000*60);
-                System.out.println("Acordei!");
             } catch (InterruptedException ex) {
                 Logger.getLogger(MultiPrograma.class.getName()).log(Level.SEVERE, "ThreadSleep", ex);
             }

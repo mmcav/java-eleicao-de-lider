@@ -6,11 +6,11 @@ import java.net.Socket;
 
 public class ClienteHandler implements Runnable {
     private Socket socket;
-    private String identificador;
+    private Processo me;
 
-    public ClienteHandler(Socket socket, String identificador) {
+    public ClienteHandler(Socket socket, Processo me) {
         this.socket = socket;
-        this.identificador = identificador;
+        this.me = me;
     }
 
     @Override
@@ -19,16 +19,39 @@ public class ClienteHandler implements Runnable {
             System.out.println("Cliente conectado: " + socket.getInetAddress().getHostAddress());
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            String resposta = in.readLine();
-            System.out.println("Mensagem recebida: " + resposta);
-            out.println("Oi! E eu sou o processo " + this.identificador);
+            String msg = in.readLine();
+            System.out.println("Mensagem recebida: " + msg);
+            String[] protocolo = msg.split("\\|");
+            switch (protocolo[0]) {
+                case "01":
+                    out.println("Oi! E eu sou o processo " + this.me.getIdentificador());
+                    break;
+                case "02":
+                    if (me.isLider()) {
+                        out.println("Eu sou o lider! Processo " + this.me.getIdentificador());
+                    } else {
+                        out.println("Eu não sou o lider, eu sou o processo " + this.me.getIdentificador());
+                    }
+                    break;
+                case "03":
+                    out.println("OK");
+                    Eleicao.getInstance().checkEleicao(protocolo[1]);
+                    break;
+                case "04":
+                    out.println("OK");
+                    Eleicao.getInstance().atualizarLider(Integer.valueOf(protocolo[1]));
+                    break;
+                default:
+                    System.out.println("codigo: " + protocolo[0]);
+                    out.println("09|Error");
+                    break;
+            }
             in.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
                 socket.close();
-                System.out.println("Conexão encerrada com o cliente: " + socket.getInetAddress().getHostAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }

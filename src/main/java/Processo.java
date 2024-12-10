@@ -1,15 +1,18 @@
 public class Processo {
-    private String identificador;
+    private Integer identificador;
     private String host;
-    private String port;
+    private Integer port;
 
-    public Processo(String identificador, String host, String port) {
+    private Boolean lider;
+
+    public Processo(Integer identificador, String host, Integer port) {
         this.identificador = identificador;
         this.host = host;
         this.port = port;
+        this.lider = false;
     }
 
-    public String getIdentificador() {
+    public Integer getIdentificador() {
         return this.identificador;
     }
     
@@ -17,8 +20,16 @@ public class Processo {
         return this.host;
     }
 
-    public String getPort() {
+    public Integer getPort() {
         return this.port;
+    }
+
+    public Boolean isLider() {
+        return this.lider;
+    }
+
+    public void setIsLider(Boolean lider) {
+        this.lider = lider;
     }
     
 }
